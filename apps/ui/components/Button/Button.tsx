@@ -1,11 +1,12 @@
-import React from 'react';
+import React from "react";
 
-import styles from './Button.scss';
+// import styles from "./Button.css";
+import styles from "./Button.module.scss";
 
 export interface ButtonProps {
-  prop?: string;
+  children?: string;
 }
 
-export function Button({prop = 'default value'}: ButtonProps) {
-  return <div className={styles.Button}>Button {prop}</div>;
+export function Button({ children = "default value" }: ButtonProps) {
+  return <button className={styles.Button}>{children}</button>;
 }
