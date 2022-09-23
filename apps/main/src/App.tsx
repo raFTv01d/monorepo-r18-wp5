@@ -5,6 +5,7 @@ import { Button as UiButton } from "@apps/ui";
 import logo from "./assets/img/logo.svg";
 import "./App.css";
 import { BestButton } from "./components/BestButton";
+import { SimpleJs } from "./components/SimpleJs";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <div>
           <BestButton />
         </div>
+        <SimpleJs />
       </header>
     </div>
   );
