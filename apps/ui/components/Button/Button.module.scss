@@ -1,3 +1,12 @@
+.base {
+  font-style: italic;
+}
+
 .Button {
   background-color: red;
+}
+
+.ButtonBlue {
+  background-color: blue;
+  @extend .base;
 }

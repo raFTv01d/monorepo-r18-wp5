@@ -12,7 +12,7 @@
     "allowJs": true,
     "jsx": "react",
     "allowSyntheticDefaultImports": true,
-    "typeRoots": ["./src/@types", "./node_modules/@types"]
+    "typeRoots": ["./src/@types", "../../@types", "./node_modules/@types"]
   },
   "include": ["./src/**/*"]
 }

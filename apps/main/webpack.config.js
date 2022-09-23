@@ -2,6 +2,7 @@ const path = require("path");
 
 const CopyPlugin = require("copy-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
 const webpack = require("webpack");
@@ -17,19 +18,37 @@ const PATH = {
   assets: "assets/",
 };
 
-module.exports = (env = {}) => {
-  const isDev =
-    process.env.NODE_ENV === "development" ? "development" : "production";
+module.exports = (env = {}, argv = {}) => {
+  const isDev = argv?.mode === "development" ? true : false;
   const isProd = !isDev;
+  console.log(`MODE: [${isDev ? "Dev" : "Prod"}]`);
 
-  return {
-    target: process.env.NODE_ENV === "development" ? "web" : "browserslist",
-    mode: process.env.NODE_ENV === "development" ? "development" : "production",
+  console.debug("ENV:::", { env, argv, NODE_ENV: process.env.NODE_ENV });
 
-    entry: [
+  /** @type { import('webpack').Configuration } */
+  const config = {
+    target: isDev ? "web" : "browserslist",
+    mode: isDev ? "development" : "production",
+    devtool: isDev ? "source-map" : undefined,
+
+    entry: {
       // "react-hot-loader/patch",
-      `${PATH.src}/index.tsx`,
-    ],
+      //   shared: {
+      //     import: [""],
+      //     filename: `${PATH.assets}js/share.[name].js`,
+      //     // runtime: "runtime",
+      //   },
+      main: {
+        import: `${PATH.src}/index.tsx`,
+        // dependOn: "shared",
+      },
+      //   ui: {
+      //     import: "@apps/ui",
+      //     chunkLoading: false,
+      //     // filename: `${PATH.assets}js/ui.[name].js`,
+      //     // dependOn: "shared",
+      //   },
+    },
     externals: {
       path: PATH,
     },
@@ -43,7 +62,7 @@ module.exports = (env = {}) => {
     },
 
     optimization: {
-      minimize: !!env.prod,
+      minimize: isProd,
       minimizer: [
         new TerserPlugin({
           extractComments: false,
@@ -64,6 +83,7 @@ module.exports = (env = {}) => {
             },
           },
         }),
+        new CssMinimizerPlugin(),
       ],
       splitChunks: {
         cacheGroups: {
@@ -89,33 +109,38 @@ module.exports = (env = {}) => {
           test: /\.(scss|css)$/i,
           //   test: /\.s[ac]ss$/i,
           use: [
-            // isDev
-            //   ? "style-loader"
-            //   :
-            {
-              loader: MiniCssExtractPlugin.loader,
-              options: {
-                // publicPath: "css",
-                publicPath: (resourcePath, context) => {
-                  return (
-                    path.relative(path.dirname(resourcePath), context) + "/"
-                  );
+            isDev
+              ? "style-loader"
+              : {
+                  loader: MiniCssExtractPlugin.loader,
+                  //   options: {
+                  //     // publicPath: "css",
+                  //     publicPath: (resourcePath, context) => {
+                  //       return (
+                  //         path.relative(path.dirname(resourcePath), context) + "/"
+                  //       );
+                  //     },
+                  //   },
                 },
+            // "css-loader",
+            {
+              loader: "css-loader",
+              options: {
+                sourceMap: true,
+                esModule: true,
+                modules: {
+                  //       //   namedExport: true,
+                  auto: true,
+                  //   mode: "icss",
+                  //   mode: "pure",
+                  //       // auto: (resourcePath)=>{return resourcePath.global},
+                  localIdentName: isProd
+                    ? "[local]--[hash:base64:5]"
+                    : "[name]__[local]--[hash:base64:5]",
+                },
+                importLoaders: 2,
               },
             },
-            "css-loader",
-            // {
-            //   loader: "css-loader",
-            //   options: {
-            //     esModule: true,
-            //     modules: {
-            //       namedExport: true,
-            //     },
-            //     sourceMap: true,
-            //     // importLoaders: 1,
-            //   },
-            // },
-            // "postcss-loader",
             {
               loader: "postcss-loader",
               options: {
@@ -125,12 +150,6 @@ module.exports = (env = {}) => {
               },
             },
             "sass-loader",
-            // {
-            //   loader: "sass-loader",
-            //   //   options: {
-            //   //     sourceMap: true,
-            //   //   },
-            // },
           ],
         },
         {
@@ -184,15 +203,18 @@ module.exports = (env = {}) => {
       //     ],
       // }),
     ].concat(
-      //   isProd
-      // ?
-      new MiniCssExtractPlugin({
-        filename: `${PATH.assets}/css/[name].[contenthash].css`,
-        // filename: ({ chunk }) => `${chunk.name.replace("/js/", "/css/")}.css`,
-        chunkFilename: `${PATH.assets}/css/[id].[contenthash].css`,
-        ignoreOrder: false,
-      })
-      // : []
+      isProd
+        ? new MiniCssExtractPlugin({
+            filename: `${PATH.assets}css/[name].[contenthash:5].css`,
+            experimentalUseImportModule: true,
+            // filename: ({ chunk }) => `${chunk.name.replace("/js/", "/css/")}.css`,
+            // chunkFilename: `${PATH.assets}css/[id].[contenthash:8].css`,
+            // runtime: true,
+            // ignoreOrder: false,
+          })
+        : []
     ),
   };
+
+  return config;
 };
